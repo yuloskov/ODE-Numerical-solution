@@ -58,7 +58,7 @@ def local_error(f, x0, y0, X, n):
     return vx, vy
 
 
-def global_error(f, x0, y0, X, the_max_n=100):
+def global_error(f, x0, y0, X, min_n = 10, max_n=100):
     """
     Get the global error of Improved Euler's method for the given equation
 
@@ -66,14 +66,14 @@ def global_error(f, x0, y0, X, the_max_n=100):
     :param x0: initial x
     :param y0: initial y
     :param X: the right side of an interval for which the approximation is calculated
-    :param the_max_n: the maximum number of iterations in the approximation
+    :param max_n: the maximum number of iterations in the approximation
     :return: vx, vy - the dependence of global error on the number of steps
     """
     vx = []
     vy = []
 
     c = exact_solution.solve_ivp(x0, y0)
-    for cur_n in range(10, the_max_n):
+    for cur_n in range(min_n, max_n):
         x = x0
         y = y0
         h = (X - x0) / float(cur_n)
