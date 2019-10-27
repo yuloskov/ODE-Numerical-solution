@@ -9,12 +9,12 @@
 from math import sqrt
 
 
-# class Given_Equation():
-def f(x, y):
-    """
-    Get the right side of ODE
-    :param x: x-coordinate
-    :param y: y-coordinate
-    :return: right side of ODE
-    """
-    return sqrt(y - x) / sqrt(x) + 1
+class Equation_Solution():
+    def f(self, x, y):
+        """
+        Get the right side of ODE
+        :param x: x-coordinate
+        :param y: y-coordinate
+        :return: right side of ODE
+        """
+        return sqrt(y - x) / sqrt(x) + 1#math.exp(2*x)+math.exp(x)+y*y-2*y*math.exp(x)#

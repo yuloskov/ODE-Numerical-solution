@@ -1,18 +1,19 @@
 # Usage
-# Get the approximate solution of ODE using Improved Euler's method and corresponding errors compare to exact solution
+# Get the approximate solution of ODE using Runge-Kutta method and corresponding errors compare to exact solution
 
-from exact_solution import ExactSolution
+import exact_solution
 import math
 from equation import Equation_Solution
+from exact_solution import ExactSolution
 
 
-class ImprovedEuler(Equation_Solution):
+class RungeKutta(Equation_Solution):
     f = Equation_Solution.f
     exact_solution = ExactSolution()
 
-    def euler(self, x0, y0, X, n):
+    def rk4(self, x0, y0, X, n):
         """
-        Calculate the approximate solution of given ODE and IVP using Euler's method
+        Calculate the approximate solution of given ODE and IVP using Runge-Kutta method
         :param f: given equation
         :param x0: initial x
         :param y0: initial y
@@ -26,15 +27,17 @@ class ImprovedEuler(Equation_Solution):
         vx[0] = x = x0
         vy[0] = y = y0
         for i in range(1, n + 1):
-            m1 = self.f(x, y)
+            k1 = h * self.f(x, y)
+            k2 = h * self.f(x + 0.5 * h, y + 0.5 * k1)
+            k3 = h * self.f(x + 0.5 * h, y + 0.5 * k2)
+            k4 = h * self.f(x + h, y + k3)
             vx[i] = x = x0 + i * h
-            m2 = self.f(x, y + h * m1)
-            vy[i] = y = y + h * (m1 + m2) / 2
+            vy[i] = y = y + (k1 + k2 + k2 + k3 + k3 + k4) / 6
         return vx, vy
 
     def local_error(self, x0, y0, X, n):
         """
-        Get the local error for Improved Euler's method
+        Get the local error for Runge-Kutta method
         :param f: given equation
         :param x0: initial x
         :param y0: initial y
@@ -52,18 +55,20 @@ class ImprovedEuler(Equation_Solution):
         c = self.exact_solution.solve_ivp(x0, y0)
 
         for i in range(1, n + 1):
-            m1 = self.f(x_prev, y_prev)
             vx[i] = x = x0 + i * h
-            m2 = self.f(x, y_prev + h * m1)
+            k1 = h * self.f(x_prev, y_prev)
+            k2 = h * self.f(x_prev + 0.5 * h, y_prev + 0.5 * k1)
+            k3 = h * self.f(x_prev + 0.5 * h, y_prev + 0.5 * k2)
+            k4 = h * self.f(x_prev + h, y_prev + k3)
             y = self.exact_solution.general_solution(c, x)
-            vy[i] = math.fabs(y - (y_prev + h * (m1 + m2) / 2))
-            x_prev = x
+            vy[i] = math.fabs(y - (y_prev + (k1 + k2 + k2 + k3 + k3 + k4) / 6))
             y_prev = y
+            x_prev = x
         return vx, vy
 
     def global_error(self, x0, y0, X, min_n=10, max_n=100):
         """
-        Get the global error of Improved Euler's method for the given equation
+        Get the global error of Runge-Kutta method for the given equation
 
         :param f: given equation
         :param x0: initial x
@@ -82,12 +87,14 @@ class ImprovedEuler(Equation_Solution):
         for cur_n in range(min_n, max_n):
             x = x0
             y = y0
-            h = (X - x0) / float(cur_n)
-            for i in range(1, cur_n + 1):
-                m1 = self.f(x, y)
+            for i in range(1, cur_n):
+                h = (X - x0) / float(cur_n)
+                k1 = h * self.f(x, y)
+                k2 = h * self.f(x + 0.5 * h, y + 0.5 * k1)
+                k3 = h * self.f(x + 0.5 * h, y + 0.5 * k2)
+                k4 = h * self.f(x + h, y + k3)
                 x = x0 + i * h
-                m2 = self.f(x, y + h * m1)
-                y = y + h * (m1 + m2) / 2
+                y = y + (k1 + k2 + k2 + k3 + k3 + k4) / 6
             vx.append(cur_n)
             vy.append(math.fabs(self.exact_solution.general_solution(c, x) - y))
         return vx, vy

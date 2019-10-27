@@ -3,11 +3,10 @@
 
 from tkinter import *
 from tkinter import messagebox
-import runge_kutta
+import rungekutta
 import euler
 import improved_euler
 import exact_solution
-import equation
 from matplotlib.backends.backend_tkagg import (
     FigureCanvasTkAgg, NavigationToolbar2Tk)
 from matplotlib.backend_bases import key_press_handler
@@ -18,7 +17,7 @@ import matplotlib as mpl
 """
 Combination of matplotlib and tkinter to display the numerical methods for solving ODEs.
 """
-
+q
 
 class App:
     def onpick(self, event):
@@ -82,7 +81,7 @@ class App:
         self.sol_fig.axes[1].set_xlim(left=0, right=self.X)
         self.sol_fig.axes[1].set_ylim(-0.15 * max(vy_er_eu), 1.5 * max(vy_er_eu))
 
-        self.sol_fig.axes[2].set_xlim(left=10, right=100)
+        self.sol_fig.axes[2].set_xlim(left=self.min_n, right=self.max_n)
         self.sol_fig.axes[2].set_ylim(-1.2 * min(vy_ger_eu), 1.2 * max(vy_ger_eu))
 
     def initialize_ui_elements(self):
@@ -92,6 +91,8 @@ class App:
         """
         f_top = LabelFrame(text="Vary parameters", bg=self.my_color, font=self.my_font)
         f_top.pack()
+        f_bottom = LabelFrame(text="Global Error Interval", bg=self.my_color, font=self.my_font)
+        f_bottom.pack()
 
         padding_label = 20
         padding_entry = 7
@@ -138,6 +139,29 @@ class App:
         X_label.pack(side=LEFT)
         self.X_entry.pack(side=LEFT)
 
+        n_min_text = StringVar()
+        n_min_text.set("Min n ->")
+        n_min_label = Label(master=f_bottom, textvariable=n_min_text, bg=self.my_color, width=padding_label-8, font=self.my_font)
+
+        self.n_min_entry = Entry(master=f_bottom, textvariable=n_min_label, bg=self.my_color, font=self.my_font,
+                             width=padding_entry)
+        self.n_min_entry.insert(END, self.min_n)
+
+        n_min_label.pack(side=LEFT)
+        self.n_min_entry.pack(side=LEFT)
+
+        n_max_text = StringVar()
+        n_max_text.set("Max n ->")
+        n_max_label = Label(master=f_bottom, textvariable=n_max_text, bg=self.my_color, width=padding_label-8,
+                            font=self.my_font)
+
+        self.n_max_entry = Entry(master=f_bottom, textvariable=n_max_label, bg=self.my_color, font=self.my_font,
+                                 width=padding_entry)
+        self.n_max_entry.insert(END, self.max_n)
+
+        n_max_label.pack(side=LEFT)
+        self.n_max_entry.pack(side=LEFT)
+
         button = Button(master=root, text="Quit", command=self._quit, bg=self.my_color, font=self.my_font)
         button.pack(side=LEFT)
         button = Button(master=root, text="Apply Changes", command=self.update, bg=self.my_color, font=self.my_font)
@@ -152,7 +176,8 @@ class App:
         self.y0 = 10
         self.X = 15
         self.n = 10
-        self.f = equation.f
+        self.min_n = 10
+        self.max_n = 200
         self.my_color = '#F0F0F0'
         self.my_font = ('Roboto Regular', 12)
 
@@ -160,19 +185,24 @@ class App:
         mpl.rcParams['lines.linewidth'] = 3
         # initialize solution graphs
 
-        vx_rk, vy_rk = runge_kutta.rk4(self.f, self.x0, self.y0, self.X, self.n)
-        vx_eu, vy_eu = euler.euler(self.f, self.x0, self.y0, self.X, self.n)
-        vx_ieu, vy_ieu = improved_euler.euler(self.f, self.x0, self.y0, self.X, self.n)
-        vx_ex, vy_ex = exact_solution.exact(self.x0, self.y0, self.X, self.n)
+        self.runge_kutta = rungekutta.RungeKutta()
+        self.euler = euler.Euler()
+        self.improved_euler = improved_euler.ImprovedEuler()
+        self.exact_solution = exact_solution.ExactSolution()
+
+        vx_rk, vy_rk = self.runge_kutta.rk4(self.x0, self.y0, self.X, self.n)
+        vx_eu, vy_eu = self.euler.euler(self.x0, self.y0, self.X, self.n)
+        vx_ieu, vy_ieu = self.improved_euler.euler(self.x0, self.y0, self.X, self.n)
+        vx_ex, vy_ex = self.exact_solution.exact(self.x0, self.y0, self.X, self.n)
 
         # initialize local error graphs
-        vx_er_eu, vy_er_eu = euler.local_error(self.f, self.x0, self.y0, self.X, self.n)
-        vx_er_rk, vy_er_rk = runge_kutta.local_error(self.f, self.x0, self.y0, self.X, self.n)
-        vx_er_ieu, vy_er_ieu = improved_euler.local_error(self.f, self.x0, self.y0, self.X, self.n)
+        vx_er_eu, vy_er_eu = self.euler.local_error(self.x0, self.y0, self.X, self.n)
+        vx_er_rk, vy_er_rk = self.runge_kutta.local_error(self.x0, self.y0, self.X, self.n)
+        vx_er_ieu, vy_er_ieu = self.improved_euler.local_error(self.x0, self.y0, self.X, self.n)
 
-        vx_ger_rk, vy_ger_rk = runge_kutta.global_error(self.f, self.x0, self.y0, self.X)
-        vx_ger_eu, vy_ger_eu = euler.global_error(self.f, self.x0, self.y0, self.X)
-        vx_ger_ieu, vy_ger_ieu = improved_euler.global_error(self.f, self.x0, self.y0, self.X)
+        vx_ger_rk, vy_ger_rk = self.runge_kutta.global_error(self.x0, self.y0, self.X, self.min_n, self.max_n)
+        vx_ger_eu, vy_ger_eu = self.euler.global_error(self.x0, self.y0, self.X, self.min_n, self.max_n)
+        vx_ger_ieu, vy_ger_ieu = self.improved_euler.global_error(self.x0, self.y0, self.X, self.min_n, self.max_n)
 
         # create plots
         self.sol_fig = Figure(figsize=(6, 4), dpi=90)
@@ -255,37 +285,67 @@ class App:
         x0 = self.x0_entry.get()
         y0 = self.y0_entry.get()
         X = self.X_entry.get()
+        self.min_n = self.n_min_entry.get()
+        self.max_n = self.n_max_entry.get()
+
+        def is_number(s):
+            """
+            Checks if the passed string s is a float number
+            :param s: String to be converted to float
+            :return: Floating point number converted from s
+            """
+            try:
+                float(s)
+                return True
+            except ValueError:
+                return False
 
         # check if IVP is correct
-        if x0 != "" and x0 is not None and self.is_number(x0):
+        if x0 != "" and x0 is not None and is_number(x0):
             self.x0 = float(x0)
         else:
             self.show_message("x0 is incorrect")
 
-        if y0 != "" and y0 is not None and self.is_number(y0):
+        if y0 != "" and y0 is not None and is_number(y0):
             self.y0 = float(y0)
         else:
             self.show_message("y0 is incorrect")
 
-        if X != "" and X is not None and self.is_number(X):
+        if X != "" and X is not None and is_number(X):
             self.X = float(X)
         else:
             self.show_message("X is incorrect")
 
+        if self.min_n != "" and self.min_n is not None and is_number(self.min_n):
+            self.min_n = int(self.min_n)
+        else:
+            self.show_message("Min n is incorrect")
+
+        if self.max_n != "" and self.max_n is not None and is_number(self.max_n):
+            self.max_n = int(self.max_n)
+        else:
+            self.show_message("Max n is incorrect")
+
+        if self.min_n >= self.max_n:
+            self.show_message("The min n value is larger or equal to the max n value")
+
+
+
+
         # build graph of solution with new IVP
-        vx_rk, vy_rk = runge_kutta.rk4(self.f, self.x0, self.y0, self.X, n)
-        vx_eu, vy_eu = euler.euler(self.f, self.x0, self.y0, self.X, n)
-        vx_ieu, vy_ieu = improved_euler.euler(self.f, self.x0, self.y0, self.X, n)
-        vx_ex, vy_ex = exact_solution.exact(self.x0, self.y0, self.X, n)
+        vx_rk, vy_rk = self.runge_kutta.rk4(self.x0, self.y0, self.X, n)
+        vx_eu, vy_eu = self.euler.euler(self.x0, self.y0, self.X, n)
+        vx_ieu, vy_ieu = self.improved_euler.euler(self.x0, self.y0, self.X, n)
+        vx_ex, vy_ex = self.exact_solution.exact(self.x0, self.y0, self.X, n)
 
         # build graph of local error with new IVP
-        vx_er_eu, vy_er_eu = euler.local_error(self.f, self.x0, self.y0, self.X, n)
-        vx_er_rk, vy_er_rk = runge_kutta.local_error(self.f, self.x0, self.y0, self.X, n)
-        vx_er_ieu, vy_er_ieu = runge_kutta.local_error(self.f, self.x0, self.y0, self.X, n)
+        vx_er_eu, vy_er_eu = self.euler.local_error(self.x0, self.y0, self.X, n)
+        vx_er_rk, vy_er_rk = self.runge_kutta.local_error(self.x0, self.y0, self.X, n)
+        vx_er_ieu, vy_er_ieu = self.improved_euler.local_error(self.x0, self.y0, self.X, n)
 
-        vx_ger_rk, vy_ger_rk = runge_kutta.global_error(self.f, self.x0, self.y0, self.X)
-        vx_ger_eu, vy_ger_eu = euler.global_error(self.f, self.x0, self.y0, self.X)
-        vx_ger_ieu, vy_ger_ieu = improved_euler.global_error(self.f, self.x0, self.y0, self.X)
+        vx_ger_rk, vy_ger_rk = self.runge_kutta.global_error(self.x0, self.y0, self.X, self.min_n, self.max_n)
+        vx_ger_eu, vy_ger_eu = self.euler.global_error(self.x0, self.y0, self.X, self.min_n, self.max_n)
+        vx_ger_ieu, vy_ger_ieu = self.improved_euler.global_error(self.x0, self.y0, self.X, self.min_n, self.max_n)
 
         self.fix_scale(vy_ex, vy_er_eu, vy_ger_eu)
 
@@ -321,18 +381,6 @@ class App:
         self.graph_ger_ieu.set_ydata(vy_ger_ieu)
 
         self.canvas.draw()
-
-    def is_number(self, s):
-        """
-        Checks if the passed string s is a float number
-        :param s: String to be converted to float
-        :return: Floating point number converted from s
-        """
-        try:
-            float(s)
-            return True
-        except ValueError:
-            return False
 
     def _quit(self):
         """
